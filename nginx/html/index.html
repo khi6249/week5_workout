@@ -1,9 +1,117 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>나의 캡스톤 소개</title><link rel="stylesheet" href="style.css"><script defer src="app.js"></script></head>
-<body><main><header><p class="eyebrow">WEEK 5 · CAPSTONE</p><h1 id="project-title">TODO: 프로젝트 이름</h1><p>누적 조회수 <strong id="view-count">불러오는 중</strong></p></header>
-<!-- TODO: AI를 활용해 디자인과 소개 내용을 완성하세요. 아래 id는 API 연결에 사용하므로 유지하세요. -->
-<section><h2>프로젝트 소개</h2><p id="project-summary">TODO: 프로젝트 목적과 해결할 문제를 소개하세요.</p></section>
-<section><h2>주요 기능</h2><div id="project-features">TODO: 주요 기능을 구체적으로 작성하세요.</div></section>
-<section><h2>사용 기술</h2><p id="project-technology">TODO: 사용 기술과 역할을 적으세요.</p></section>
-<section><h2>팀 소개</h2><p>TODO: 팀원과 역할을 작성하세요.</p></section>
-<button id="download-button">소개 내용 다운로드 (.md)</button><button id="refresh-views">조회수 다시 확인</button><p id="message" class="result" aria-live="polite"></p>
-<footer><a href="/api/health">API 연결 확인</a><p>페이지를 열거나 새로고침하면 조회수가 증가합니다.</p></footer></main></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>주차장 도우미 - 캡스톤 프로젝트</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">WEEK 5 · DOCKER PRACTICE</p>
+    <h1>주차장 도우미 2224024 김형일</h1>
+    <p>실시간으로 주차장의 빈자리를 찾아주는 스마트 주차 안내 시스템</p>
+    <a href="/api/health" target="_blank" rel="noopener">기본 연결 확인: /api/health</a>
+  </header>
+
+  <!-- 조회수 및 MD 파일 다운로드 섹션 -->
+  <section>
+    <h2>프로젝트 정보 및 관리</h2>
+    <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <button id="view-count-btn" type="button">조회수 확인</button>
+      <span id="view-count-display" style="font-weight: bold;">누적 조회수: 0회</span>
+    </div>
+    <div>
+      <button id="download-md-btn" type="button">소개 내용 md 파일 다운로드</button>
+    </div>
+  </section>
+
+  <!-- 프로젝트 소개 및 상세 내용 섹션 -->
+  <section>
+    <h2>프로젝트 소개</h2>
+    <p>본 프로젝트는 도심 및 대형 건물의 주차 공간 부족 문제를 해결하기 위해 기획되었습니다. 초음파 센서와 영상 인식을 활용해 빈 주차 공간의 실시간 정보를 수집하고, 사용자에게 웹 및 모바일 환경을 통해 가장 가까운 빈자리를 빠르게 안내합니다.</p>
+    
+    <h3 style="margin-top: 20px;">⭐ 주요 기능</h3>
+    <ul style="line-height: 1.6; margin-left: 20px;">
+      <li><strong>실시간 빈자리 탐색:</strong> 주차 구역별 주차 여부를 실시간으로 파악하여 지도 형태로 시각화 제공</li>
+      <li><strong>주차 자리 예약 시스템:</strong> 목적지 근처의 빈자리를 미리 선점하거나 안내받는 기능</li>
+      <li><strong>통계 및 리포트:</strong> 시간대별 주차 혼잡도 분석 데이터를 관리자에게 제공</li>
+    </ul>
+
+    <h3 style="margin-top: 20px;">🛠️ 사용 기술 (Tech Stack)</h3>
+    <ul style="line-height: 1.6; margin-left: 20px;">
+      <li><strong>Backend:</strong> Python, Flask</li>
+      <li><strong>Frontend:</strong> HTML5, CSS3, JavaScript</li>
+      <li><strong>Server & Infra:</strong> Docker, Nginx (Reverse Proxy)</li>
+      <li><strong>IoT / Database:</strong> Arduino/Raspberry Pi (센서 연동), SQLite/MySQL</li>
+    </ul>
+
+    <h3 style="margin-top: 20px;">👥 팀 소개</h3>
+    <p><strong>팀명:</strong> 파킹원더랜드 (Parking Wonderland)</p>
+    <p><strong>팀원 정보:</strong> 2224024 김형일 (시스템 아키텍처 및 백엔드/인프라 담당)</p>
+  </section>
+
+  <!-- 기존 검색 기능 유지 -->
+  
+
+  <footer>Nginx는 화면을 제공하고 Flask는 검색과 분석을 처리합니다.</footer>
+</main>
+
+<!-- 조회수 및 다운로드 동작 스크립트 -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. 누적 조회수 관리
+    let views = localStorage.getItem("project_views");
+    if (!views) {
+      views = 1;
+    } else {
+      views = parseInt(views) + 1;
+    }
+    localStorage.setItem("project_views", views);
+    document.getElementById("view-count-display").innerText = `누적 조회수: ${views}회`;
+
+    document.getElementById("view-count-btn").addEventListener("click", () => {
+      const currentViews = localStorage.getItem("project_views") || 0;
+      alert(`현재까지의 누적 조회수는 ${currentViews}회 입니다.`);
+    });
+
+    // 2. MD 파일 다운로드 기능 (작성된 내용 기반)
+    document.getElementById("download-md-btn").addEventListener("click", () => {
+      const markdownContent = `# 캡스톤 프로젝트: 주차장 도우미
+- **학번/이름**: 2224024 김형일
+- **슬로건**: 실시간으로 주차장의 빈자리를 찾아주는 스마트 주차 안내 시스템
+
+## 1. 프로젝트 소개
+본 프로젝트는 도심 및 대형 건물의 주차 공간 부족 문제를 해결하기 위해 기획되었습니다. 초음파 센서와 영상 인식을 활용해 빈 주차 공간의 실시간 정보를 수집하고 안내합니다.
+
+## 2. 주요 기능
+- 실시간 빈자리 탐색 (지도 시각화)
+- 주차 자리 예약 시스템
+- 통계 및 시간대별 혼잡도 분석
+
+## 3. 사용 기술
+- Backend: Python, Flask
+- Frontend: HTML, CSS, JavaScript
+- Infra: Docker, Nginx
+
+## 4. 팀 소개
+- 팀명: 파킹원더랜드
+- 팀원: 2224024 김형일
+`;
+
+      const blob = new Blob([markdownContent], { type: "text/markdown;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "parking_helper_introduction.md";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  });
+</script>
+</body>
+</html>

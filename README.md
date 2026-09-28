@@ -1,123 +1,205 @@
-# week5_workout · 캡스톤 소개 페이지 과제
+# week5_practice · Docker 실습
 
-**Windows Docker Desktop과 PowerShell에서 nginx·Flask를 Compose로 실행합니다.** 본인의 소개 페이지와 Compose 설정을 완성하고, health API에 본인 학번과 이름을 넣습니다.
+**Windows의 Docker Desktop과 PowerShell에서 진행합니다.** Flask와 nginx를 각각 컨테이너로 실행한 뒤 같은 프로젝트를 Compose로 실행합니다.
 
 |구분|이름·주소|
 |---|---|
-|과제 폴더|`C:\lab\week5hw`|
-|Flask 이미지 / 컨테이너|`week5_03` / `week5_api02`|
-|nginx 이미지 / 컨테이너|`week5_04` / `week5_web02`|
-|네트워크 / 데이터 볼륨|`week5_net02` / `week5_data02`|
+|실습 폴더|`C:\lab\week5`|
+|Flask 이미지 / 컨테이너|`week5_01` / `week5_api01`|
+|nginx 이미지 / 컨테이너|`week5_02` / `week5_web01`|
+|네트워크|`week5_net01`|
 |웹 페이지|`http://localhost:8080`|
 
-## 1. 프로젝트 준비
+## 1. 실행 환경 확인
 
-실습과 같은 Windows 실행 환경을 사용합니다. Docker Desktop을 실행하고 [교수자 저장소](https://github.com/Mok2Lee/week5_workout)를 Fork합니다. `내계정`을 바꿔 PowerShell에서 실행합니다.
+NAS에서 제공하는 Docker Desktop 설치 파일로 설치하고 실행합니다. 설치 과정에서 WSL 2 또는 재부팅을 요구하면 화면 안내를 따릅니다. **Linux 컨테이너 모드**에서 PowerShell을 열고 실행합니다.
+
+```powershell
+docker version
+docker compose version
+docker run --rm hello-world
+```
+
+Client와 Server 버전, Compose 버전, `Hello from Docker!`를 확인합니다. 설치 파일과 컨테이너 이미지 다운로드는 별도 과정입니다. 다운로드 실패 시 표시된 오류를 교수자에게 보여 줍니다.
+
+## 2. 본인 저장소 준비
+
+[교수자 저장소](https://github.com/Mok2Lee/week5_practice)를 **Fork**합니다. 아래 `내계정`을 본인 GitHub 계정명으로 바꿉니다. 저장소 이름은 week5_practice, 컴퓨터 안의 폴더 이름은 week5입니다.
 
 ```powershell
 New-Item -ItemType Directory -Force C:\lab
 Set-Location C:\lab
-git clone https://github.com/내계정/week5_workout.git week5hw
-Set-Location .\week5hw
+git clone https://github.com/내계정/week5_practice.git week5
+Set-Location .\week5
 code .
 ```
 
-저장소 이름은 week5_workout, 로컬 폴더 이름은 week5hw입니다. 이후 명령은 `C:\lab\week5hw`에서 실행합니다. 실습 페이지가 실행 중이면 **`C:\lab\week5`에서 `docker compose down`** 후 과제를 실행합니다. 두 프로젝트가 같은 8080번 포트를 사용합니다.
+이후 명령은 VS Code의 **PowerShell 터미널**, `C:\lab\week5`에서 실행합니다. 같은 폴더가 이미 있으면 다시 clone하지 말고 기존 실습 폴더를 확인합니다.
 
-## 2. 소개 페이지 제작
+Fork 대신 본인의 빈 저장소로 옮길 때는 교수자 저장소를 clone한 뒤 `git remote set-url origin https://github.com/내계정/week5_practice.git`로 연결을 바꿉니다. Push 인증에는 GitHub의 로그인 안내를 따릅니다.
 
-`nginx/html/index.html`에 프로젝트명·소개·주요 기능·사용 기술·팀 소개를 작성합니다. AI로 HTML·CSS를 제작해도 됩니다. 사진은 `nginx/html` 안에 넣고 상대 경로로 연결합니다.
+## 3. 프로젝트 구성
 
-|화면 요소|유지할 id|
-|---|---|
-|프로젝트명|project-title|
-|소개글|project-summary|
-|주요 기능|project-features|
-|사용 기술|project-technology|
-|다운로드 버튼|download-button|
-|조회수 표시 / 다시 확인 버튼|view-count / refresh-views|
-|결과 메시지|message|
-
-**id와 app.js 연결을 유지**해야 제공된 API를 사용할 수 있습니다. AI 요청 예시: “캡스톤 소개 정적 HTML을 만들어 줘. 제공한 id와 app.js 연결을 유지하고 HTML·CSS로 구성해 줘. 프로젝트 내용은 다음과 같아: …”
-
-## 3. Compose 완성
-
-compose.yaml의 TODO를 완성합니다. Flask·nginx Dockerfile과 API 코드는 제공됩니다.
-
-|작성 위치|완성할 값|
-|---|---|
-|api의 build|`./api`|
-|nginx의 build|`./nginx`|
-|nginx의 ports|`8080:80`|
-|api의 DATA_DIR|`/data`|
-|api의 volumes|`data:/data`|
-
-두 이미지 이름은 `week5_03`과 `week5_04`, 컨테이너 이름은 `week5_api02`와 `week5_web02`입니다. 최상위 data 볼륨은 실제 이름 `week5_data02`로 제공됩니다. nginx는 `week5_api02:5000`으로 API 요청을 전달합니다.
-
-### 학번·이름 등록
-
-`api/app.py`의 `health()`에서 **`student_id`는 본인 학번, `name`은 본인 이름**으로 변경합니다. 학번은 문자열로 작성하고, `status: ok`는 유지합니다.
-
-```json
-{
-  "status": "ok",
-  "student_id": "본인 학번",
-  "name": "본인 이름"
-}
+```text
+api/
+  app.py              연결 확인·프로젝트 검색·소개글 분량 검사
+  requirements.txt    Flask 버전
+  Dockerfile          Flask 이미지 제작
+nginx/
+  Dockerfile          nginx 이미지 제작
+  nginx.conf          화면 제공과 API 요청 전달
+  html/               index.html, style.css, app.js
+compose.starter.yaml  Compose 작성 틀
 ```
 
-실행 후 `http://localhost:8080/api/health`에서 본인 정보가 나오는지 확인합니다. 이미 실행 중이었다면 `docker compose up -d --build api`와 `docker compose restart nginx`으로 수정 내용을 반영합니다.
+nginx는 HTML 화면을 제공하고 `/api/` 요청을 `week5_api01:5000`의 Flask로 전달합니다. **이미지에 파일을 복사하므로 소스를 수정한 뒤에는 해당 이미지를 다시 빌드**합니다.
 
-## 4. 실행과 확인
+## 4. Docker 명령으로 실행
+
+### 이미지 제작
+
+```powershell
+docker build -t week5_01 ./api
+docker build -t week5_02 ./nginx
+docker images
+```
+
+Flask 이미지와 nginx 이미지가 모두 만들어졌는지 확인합니다. Flask 설치는 Dockerfile의 빌드 과정에서 수행하므로 Windows에 Flask를 따로 설치하지 않습니다.
+
+### 네트워크와 컨테이너 실행
+
+```powershell
+docker network create week5_net01
+docker run -d --name week5_api01 --network week5_net01 week5_01
+docker run -d --name week5_web01 --network week5_net01 -p 8080:80 week5_02
+docker ps
+curl.exe -i http://localhost:8080/api/health
+```
+
+**HTTP 200**과 `{"status":"ok"}`를 확인합니다. 실행 직후 응답이 없으면 잠시 후 다시 실행합니다. 컨테이너 이름이나 8080번 포트가 이미 사용 중이면 기존 자원을 먼저 확인하며, 다른 프로젝트의 자원은 삭제하지 않습니다.
+
+### 기능 확인
+
+브라우저에서 `http://localhost:8080`을 엽니다.
+
+|기능|입력|확인 결과|
+|---|---|---|
+|연결 확인|`/api/health`|`status: ok`|
+|프로젝트 검색|분야 웹, 검색어 예약|교내 공간 예약 1개|
+|소개글 분량 검사|짧은 글 / 100~300자 글|글자 수·단어 수·권장 분량 충족 여부|
+
+```powershell
+docker logs --tail 8 week5_api01
+docker logs --tail 8 week5_web01
+```
+
+검색은 `GET /api/projects`, 분량 검사는 `POST /api/analyze`로 요청합니다. 두 컨테이너의 로그에서 같은 요청의 200 응답을 확인합니다.
+
+## 5. 코드 수정과 컨테이너 교체
+
+`api/app.py`에 예시 프로젝트를 추가합니다. **파일만 수정했을 때 기존 컨테이너의 결과가 그대로**인지 확인한 뒤 실행합니다.
+
+```powershell
+docker build -t week5_01 ./api
+docker stop week5_api01
+docker rm week5_api01
+docker run -d --name week5_api01 --network week5_net01 week5_01
+docker restart week5_web01
+curl.exe -i http://localhost:8080/api/health
+```
+
+nginx를 재시작해 새 API 컨테이너 주소를 다시 찾습니다. 검색 결과에 추가한 프로젝트가 표시되는지 확인합니다.
+
+HTML·CSS를 수정했다면 웹 이미지를 다시 빌드하고 웹 컨테이너를 교체합니다.
+
+```powershell
+docker build -t week5_02 ./nginx
+docker stop week5_web01
+docker rm week5_web01
+docker run -d --name week5_web01 --network week5_net01 -p 8080:80 week5_02
+```
+
+## 6. 같은 구성을 Compose로 실행
+
+수동 실행과 Compose가 **같은 컨테이너·네트워크 이름**을 사용합니다. 먼저 이번 실습에서 만든 수동 자원을 정리합니다.
+
+```powershell
+docker stop week5_web01 week5_api01
+docker rm week5_web01 week5_api01
+docker network rm week5_net01
+Copy-Item compose.starter.yaml compose.yaml
+```
+
+compose.yaml의 TODO를 완성하고 아래 설정과 비교합니다.
+
+```yaml
+name: week5
+services:
+  api:
+    build: ./api
+    image: week5_01
+    container_name: week5_api01
+  nginx:
+    build: ./nginx
+    image: week5_02
+    container_name: week5_web01
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+networks:
+  default:
+    name: week5_net01
+```
+
+`api`와 `nginx`은 Compose의 서비스 이름입니다. `container_name`은 화면에 표시되는 컨테이너 이름, `image`는 만들어 사용할 이미지 이름입니다. `networks.default.name`으로 두 서비스가 연결될 네트워크 이름을 정합니다.
 
 ```powershell
 docker compose config
 docker compose up -d --build
 docker compose ps
 curl.exe -i http://localhost:8080/api/health
+docker compose logs --tail 8 api nginx
 ```
 
-HTTP 200, `status: ok`, **본인 학번(`student_id`)과 이름(`name`)**을 확인한 뒤 `http://localhost:8080`을 엽니다.
+검색·분량 검사 결과가 수동 실행 때와 같은지 확인합니다. 기본 `depends_on`은 시작 순서만 정하므로 Flask가 준비되기 전에는 응답이 잠시 없을 수 있습니다.
 
-1. 본인의 소개 내용이 표시되는지 확인합니다.
-2. **소개 내용 다운로드**로 받은 project-intro.md를 열고 화면의 소개·기능·기술 내용과 비교합니다.
-3. 페이지를 새로고침하면 조회수가 1 증가하는지 확인합니다.
-4. **조회수 다시 확인** 버튼만 누르면 값이 그대로인지 확인합니다.
+## 7. 수정·종료·재실행
 
-이전 실습 화면의 JavaScript가 브라우저에 남아 버튼이 반응하지 않으면 **Ctrl+Shift+R**로 강력 새로고침합니다.
-
-## 5. 데이터 보존 확인
+API 수정 후:
 
 ```powershell
-curl.exe http://localhost:8080/api/views
-docker compose down
-docker compose up -d
-curl.exe http://localhost:8080/api/views
+docker compose up -d --build api
+docker compose restart nginx
 ```
 
-Flask가 시작한 뒤 마지막 명령을 실행하고 재생성 전후 수치가 같은지 확인합니다. 메인페이지를 먼저 열면 조회수가 증가하므로 비교할 때는 `/api/views`만 확인합니다. **`down -v`는 저장 볼륨까지 삭제**하므로 보존 확인에 사용하지 않습니다.
+HTML·CSS 또는 nginx 설정 수정 후:
 
-## 6. 수정과 제출
+```powershell
+docker compose up -d --build nginx
+```
 
-HTML·CSS 수정 후 `docker compose up -d --build nginx`으로 웹 이미지를 다시 빌드합니다. API 수정 후에는 `docker compose up -d --build api`, `docker compose restart nginx`을 실행합니다.
+종료와 재실행:
 
-- 본인 GitHub 저장소에 HTML·CSS·Compose 파일과 수정한 `api/app.py` 반영
-- `/api/health`에서 본인 학번·이름이 표시되는 응답 화면
-- 소개 페이지와 실제 다운로드 파일
-- 조회수 증가·다시 확인·컨테이너 재생성 후 유지 결과
-- 두 서비스가 실행 중인 상태
+```powershell
+docker compose down
+docker compose up -d
+docker compose ps
+```
 
-기한·배점·최종 제출 형식은 LMS 공지를 따릅니다. 완료 후 `docker compose down`으로 종료합니다.
+실습을 마치면 `docker compose down`으로 종료합니다.
 
-## 제공 API
+## 오류 확인
 
-|요청|역할|
+|증상|확인할 내용|
 |---|---|
-|GET /api/health|기본 연결 확인 및 본인 학번·이름 반환|
-|POST /api/download|현재 화면 내용으로 Markdown 파일 생성|
-|POST /api/views|조회수 1 증가|
-|GET /api/views|증가 없이 현재 값 확인|
+|Docker Server 연결 실패|Docker Desktop 실행·엔진 준비 상태|
+|이름이 이미 사용 중|`docker ps -a`와 `docker network ls`, 수동 실행 정리 여부|
+|8080 포트 사용 중|실습·과제 중 이미 실행 중인 컨테이너|
+|nginx 502|API 로그, 같은 네트워크, `week5_api01` 이름, nginx 재시작|
+|소스 수정이 반영되지 않음|수정한 api 또는 nginx 이미지 재빌드 여부|
+|실습에서 과제로 바꾼 뒤 버튼이 반응하지 않음|Ctrl+Shift+R로 강력 새로고침|
 
-조회수는 페이지 로드 횟수이며 새로고침도 포함합니다. 다운로드는 고정 파일 링크가 아니라 현재 화면의 소개 내용을 API에 보내 생성합니다.
+실습용 Flask 개발 서버를 사용합니다. 공개 운영 환경의 배포 구성은 별도로 다룹니다.
 
 Ubuntu VM 설치·연결 확인이 필요한 경우에만 [Ubuntu 참고 안내](docs/ubuntu-docker.md)를 확인합니다. 설치나 다운로드가 실패하면 Windows PowerShell 실습으로 진행합니다.
